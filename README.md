@@ -15,6 +15,8 @@
     - [Visualization](#visualization)
     - [Basic Syntax Summary](#basic-syntax-summary)
   - [Syntax in Detail](#syntax-in-detail)
+    - [Engines, Dialects, Influencers](#engines-dialects-influencers)
+    - [Matching Characters](#matching-characters)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -373,3 +375,91 @@ Lines loop back where character can or should be repeated.
 * `i` Modifiers
 
 ## Syntax in Detail
+
+**Terminology**
+
+"Regular Expression" is *only* referring to the pattern, eg: `[a-z0-9]+`.
+
+The pattern *may* need to be surrounded by delimeters `/`, eg: `/[a-z0-9]+/`.
+
+*Interpretation* of the pattern may be influenced by *modifiers* (aka flags) that appear after the trailing delimeter, eg: `/[a-z0-9]+/im`.
+
+![terminology](doc-images/terminology.png "terminology")
+
+### Engines, Dialects, Influencers
+
+Regex standards are complicated, lots of history.
+
+Initially only supported limited syntax such as: `. \ [ ^ $ *`
+
+Over time, more complex pattern matching was supported with: `? + ( | ) { }`
+
+And even more complexity: `\s \d (?=...) (?:..) (?P<>...) (?#...)`
+
+But lots of people were building these regex engines/libraries/interpreters at the same time, and each came up with their own syntaxes and matching algorithms that were slightly different than the others.
+
+**Regex Engines**
+
+30+ regex engines including: POSIX, PCRE, ECMAscript, Oniguruma, GRETA, DEELX, FREJ, GLib/GRegex, Pattwo, Henry Spencer's regex, Jakarta, Boost, TRE, RE2, QT, RGX, CL-PPCRE.
+
+All have their own regex dialect.
+
+Perl programming language made the most progress of all of these in advance pattern matching syntax.
+
+As a result, the majority of regex engines support the PCRE standard.
+
+**Influencers**
+
+Result of regex influenced by several factors:
+
+1. Regex engine: aka interpreter library.
+2. Engine version: regex engine may have different versions released and be compiled with different options/flags to enable certain features.
+3. Program/Programming language: regex engine is implemented in a programming language or editor or some other program. Implementation may not support all features of the regex engine. Some implementations may have added *extra features* to the engine. Some programming languages implement multiple regex engines and give programmer a choice as to which to use.
+4. Version of Program/Programming language.
+5. Locale of system under which program is running.
+6. Compiler/interpreter of the program that is running.
+
+**Syntax Overlap**
+
+Due to all the above variations, it can be challenging to write portable regex.
+
+All the regex engines overlap in their supported syntax, but all also have differences:
+
+![syntax overlap](doc-images/syntax-overlap.png "syntax overlap")
+
+This course will focus on ~50% of the features where most engines overlap.
+
+**Feature Availability**
+
+See `Materials.zip` in course handout, but also double-check in regex manual for environment you're planning to use it in.
+
+### Matching Characters
+
+Regex contains both *special* and *ordinary* characters.
+
+**Ordinary Characters**
+
+Simplest, eg: `A`, `a`, `0`.
+
+They just match themselves, eg: regex `abc` will match `abcdefghijklmnopqrstuvwxyz`.
+
+BUT using a regex to match only a literal string is not efficient. Most programming languages will have a better suited method to do this.
+
+**Control/Non-Printing Characters**
+
+Can also be matched in the same way as literal/ordinary characters:
+
+![control chars](doc-images/control-chars.png "control chars")
+
+WATCH OUT: Not all of these may be supported in all programming environments.
+
+**Control Sequences**
+
+* `\cX` Control sequences
+* `\XXX`, `\0XX` Octals
+* `\xHH`, `\x{HHHH}` Hex codes
+* `\uHHHH`, `\u{H...}` Unicode codepoints
+
+WATCH OUT: Not all of these may be supported in all programming environments.
+
+Left at 1:05
