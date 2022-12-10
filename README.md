@@ -17,6 +17,8 @@
   - [Syntax in Detail](#syntax-in-detail)
     - [Engines, Dialects, Influencers](#engines-dialects-influencers)
     - [Matching Characters](#matching-characters)
+    - [Meta Characters - Character Classes](#meta-characters---character-classes)
+    - [Meta Characters - Wildcard](#meta-characters---wildcard)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -32,7 +34,23 @@ Tester one at a time: https://www.regextester.com/
 
 Tester multiple: https://regexr.com/
 
-Best: Proprietary html/js tool provided by instructor in Exercise files.
+Also: Proprietary html/js tool provided by instructor in Exercise files.
+
+Module 2:
+Testing: proprietary, included in the exercise files.
+Visualisation: https://regexper.com/
+
+Module 3:
+Clip 4: http://myregexp.com/
+Clip 6: https://regex101.com/
+Clip 7: http://www.rexv.org/
+Clip 8: http://regexhero.net/
+Clip 9: http://rubular.com/
+
+Module 4:
+Clip 1: https://sourceforge.net/projects/regexbuilder/
+Clip 2: https://regex101.com/
+Clip 3: http://www.weitz.de/regex-coach/
 
 ## Fundamentals
 
@@ -462,4 +480,95 @@ WATCH OUT: Not all of these may be supported in all programming environments.
 
 WATCH OUT: Not all of these may be supported in all programming environments.
 
-Left at 1:05
+**Pitfalls**
+
+Recall `\s` in earlier demo, shorthand for whitespace.
+
+There's also `\R` for Unix/Mac/Windows line endings.
+
+Usually the shorthand codes are different than control characters.
+
+Except `\b`: This means backspace as a control character. If you need to match literal backspace, use it in a character class: `[\b]`. Could also use hex or octal sequence for backspace character.
+
+Null byte `\0` may not work, use the hex escape sequence instead `\x00`
+
+### Meta Characters - Character Classes
+
+Characters with special meaning.
+
+**Character Classes - Positive**
+
+Character classes are enclosed in square brackets `[...]`
+
+Can specify individual characters or dashes to indicate a range.
+
+Can combine multiple ranges and literals in a single character class.
+
+* `[abcdef]`
+* `[a-f]`
+* `[a-f_%0-9]`
+
+Character class means: Any of the characters contained in the square brackets is considered a match.
+
+**Character Classes - Negative**
+
+Can also invert by adding a caret `^` at beginning of character class:
+
+* `[^abcdef]`
+* `[^a-f]`
+* `[^a-f_%0-9]`
+
+This means: Match anything *except* the characters contained in the character class.
+
+Example using: http://myregexp.com/
+
+Suppose the Subject text contains a list of items and prices and we want to match only the prices:
+
+```
+Hair cut         $25
+Cut & wash       $40
+Hair colouring   $70
+Shave            $15
+```
+
+Regex to match prices: `[$0-9]+`
+
+![match prices](doc-images/match-prices.png "match prices")
+
+If add caret in front of character class, will match all but the prices `[^$0-9]+`
+
+![all but prices](doc-images/all-but-prices.png "all but prices")
+
+**Matching Special Characters**
+
+How to match a literal dash `-` within a character class?
+
+Place it at the very beginning or end of the character class and it will be treated as a literal: `[A-Za-z_-]`
+
+To use dash within a range, to start range with a dash, that range must be the first range in character class: `[--/A-Z]`.
+
+To end range in dash, the range can appear anywhere in character class: `[A-Z+--]`.
+
+Matching a literal `^` works similarly, but do not place it as first character: `[A-Za-z^]`.
+
+To match literal square brackets `[` or `]` - place as first character or escape them: `[[]`, `[A-Z\[]`, `[A-Z\]`
+
+**Character Class Watch Out**
+
+Character ranges usually follow order of locale/collation program is running under.
+
+Example using [ASCII character table](https://www.asciitable.com/).
+
+Using range `[A-Z]` behaves as expected, only matching characters A, B, C,...Z
+
+![ascii a z upper](doc-images/ascii-A-Z-upper.png "ascii a z upper")
+
+But using range from upper A to lower Z `[A-z]` will match some other characters that are in the ASCII order including `[`, `\`, `]`:
+
+![ascii a z lower](doc-images/ascii-A-Z-lower.png "ascii a z lower")
+
+Careful as to order of how range is defined, eg: `[0-9]` works as expected, but `[9-0]` is not well defined and may either be considered invalid or not match anything.
+
+Empty lists `[]` and lists missing closing bracket `/[/` are invalid.
+
+### Meta Characters - Wildcard
