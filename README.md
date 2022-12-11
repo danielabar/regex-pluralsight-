@@ -19,6 +19,7 @@
     - [Matching Characters](#matching-characters)
     - [Meta Characters - Character Classes](#meta-characters---character-classes)
     - [Meta Characters - Wildcard](#meta-characters---wildcard)
+    - [Meta Characters - Quantifiers and Greediness](#meta-characters---quantifiers-and-greediness)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -572,3 +573,113 @@ Careful as to order of how range is defined, eg: `[0-9]` works as expected, but 
 Empty lists `[]` and lists missing closing bracket `/[/` are invalid.
 
 ### Meta Characters - Wildcard
+
+Wildcard in regex is the dot character `.`.
+
+Dot (usually) matches any character except new line.
+
+When dot is used within a character class, it becomes a literal dot, no longer a wildcard.
+
+**Pitfalls**
+
+Need to be aware of which flavor of regex is being used as it affects dot behaviour.
+
+In some implementations it does not match carriage return.
+
+In `awk`, dot matches anything but the null byte.
+
+`.` together with `+` quantifier will be slow.
+
+### Meta Characters - Quantifiers and Greediness
+
+Four different ways to indicate repetition. Three of which are single character quantifiers:
+
+1. `?` Zero or one times, i.e. "maybe" match
+2. `+` One or more times, i.e. repeat as often as possible but at least once
+3. `*` Zero or more times, i.e. repeat as often as possible, but also accept no matches
+
+Fourth type of quantifier allows for more precision. Can specify exact quantity to match or ranges to indicate min and max quantities to match:
+
+4. `{}`
+   1. `{n}` Exactly `n` times
+   2. `{n,}` `n` or more times. Like `+` and `*`, will try to match as often as possible.
+   3. `{n,m}` Between `n` and `m` times
+   4. `{,m}` Between 0 and m times (same as `{0,m}`).
+
+**WATCH OUT**
+
+`{,m}` not available in all implementations, best practice is to use more widely supported syntax `{0,m}`.
+
+**Scope**
+
+Quantifier applies to a "unit", where a unit is a single part of the regex pattern that immediately precedes the quantifier.
+
+A unit could be for example:
+
+* String literal `abcd+`: Quantifier applies to `abcd`
+* Character class `[ab]*cd`: Quantifier applies to `[ab]`
+* Group `a(b|c)?d`: Quantifier applies to `(b|c)`
+
+**Greediness**
+
+`+`, `*`, and `{n,}` All try to match as often as possible. i.e. they look for max allowed repetition, and fall back to less repetition only if matching on the maximum repetition would prevent getting a match for entire regex.
+
+Regex always favors a match over a non-match.
+
+Regex always tries to match as often as possible.
+
+**Greediness and Backtracing**
+
+Using: https://regex101.com/
+
+Consider subject text:
+
+`We take one step forward, two steps back`
+
+Regex is processed from left to right.
+
+Starts by matching first character in pattern against first possible location in input string.
+
+![greedy back 1](doc-images/greedy-back-1.png "greedy back 1")
+
+![greedy back 2](doc-images/greedy-back-2.png "greedy back 2")
+
+Then moves on to next character in pattern and tries to match that against previously matched character in input string
+
+![greedy back 3](doc-images/greedy-back-3.png "greedy back 3")
+
+![greedy back 4](doc-images/greedy-back-4.png "greedy back 4")
+
+If a character is encountered in pattern where it can't match against previously character in input string, it moves further back in input string to see if it can find the pattern so that the currently encountered portion of regex matches as well, i.e. *backtracing*.
+
+Notice how adding a `t` at end of pattern makes the current match "move back":
+
+![greedy back 5](doc-images/greedy-back-5.png "greedy back 5")
+
+Now adding `[a-z]` (i.e. match a single character in range a - z) followed by `+` quantifier moves forward:
+
+![greedy back 6](doc-images/greedy-back-6.png "greedy back 6")
+
+But adding literal `p` character to regex makes it "move back" in the match:
+
+![greedy back 7](doc-images/greedy-back-7.png "greedy back 7")
+
+When regex engine encounters a quantifier, it "searches forward" matching as much as possible.
+
+When engine then encounters a pattern that doesn't match in currently matched portion of string, it "goes back" until if finds a position in which it does match. For example, adding a literal space character to our current regex, notice the match goes back to `one step ` in subject text:
+
+![greedy back 8](doc-images/greedy-back-8.png "greedy back 8")
+
+Next time engine encounters a quantifier, repeats the process of searching forward as much as possible, then step-by-step go back as it encounters other characters in pattern that may not match what's been matched so far in the going forwards step.
+
+![greedy back 9](doc-images/greedy-back-9.png "greedy back 9")
+
+![greedy back 10](doc-images/greedy-back-10.png "greedy back 10")
+
+**Performance**
+
+Frequent backtracing (stepping back from greedy quantifier match to match next part of pattern) can slow down the matching because engine needs to go over string multiple times.
+
+For small string, not an issue. But for large input text and/or complex pattern, will be noticeably slow to match.
+
+Left at 3:34
