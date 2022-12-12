@@ -519,6 +519,8 @@ Can also invert by adding a caret `^` at beginning of character class:
 * `[^a-f]`
 * `[^a-f_%0-9]`
 
+NOTE: Caret `^` inside character class means negation, whereas outside of a character class it means anchor to beginning of string.
+
 This means: Match anything *except* the characters contained in the character class.
 
 Example using: http://myregexp.com/
@@ -682,4 +684,67 @@ Frequent backtracing (stepping back from greedy quantifier match to match next p
 
 For small string, not an issue. But for large input text and/or complex pattern, will be noticeably slow to match.
 
-Left at 3:34
+Eg: Do NOT attempt to parse HTML with regex. A DOM parser is better suited for that.
+
+Tips to improve performance:
+
+* Be precise
+* Use negated character classes (prevents backtracing). Generally a better solution than using dot `.` wildcard with a quantifier.
+
+**Less Greedy Quantifiers**
+
+aka Reluctant, Lazy
+
+Adding an extra question mark `?` changes quantifier from *greedy* to *reluctant*.
+
+* `<unit>??`
+* `<unit>+?`
+* `<unit>*?`
+* `<unit>{n,m}?`
+* `<unit>{n,}?`
+* `<unit>{,m}?`
+
+Regex will try to match the quantified "unit" the *least* amount of times. (least could be 0 times).
+
+Example subject string:
+
+```
+Be on your guard against greed
+```
+
+Greedy match 0 or more of any character followed by the letter `d`: `.*d` matches entire string:
+
+```
+Be on your guard against greed
+```
+
+Reluctant version (add question mark after star quantifier) matches only up to first `d`:
+
+```
+Be on your guard
+```
+
+Doesn't always improve performance, depends on size of input string and complexity of regex.
+
+Eg subject:
+
+```
+We take one step back, two steps forward
+```
+
+Reluctant `one.*?b` will first match `one` in subject string, then take one step forward at a time "eating" one character at a time in input string until it finds a match for next part of regex which is literal `b`. So it will try in sequence:
+
+```
+one
+one s
+one st
+one ste
+...
+one step b
+```
+
+So you can still end up with a high number of steps for a lengthy input string.
+
+**Pitfalls**
+
+Left at 7:46
