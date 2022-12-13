@@ -20,6 +20,7 @@
     - [Meta Characters - Character Classes](#meta-characters---character-classes)
     - [Meta Characters - Wildcard](#meta-characters---wildcard)
     - [Meta Characters - Quantifiers and Greediness](#meta-characters---quantifiers-and-greediness)
+  - [Meta Characters - Alternation](#meta-characters---alternation)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -747,4 +748,74 @@ So you can still end up with a high number of steps for a lengthy input string.
 
 **Pitfalls**
 
-Left at 7:46
+Don't try to repeat something that is unrepeatable -> either will get syntax error or quantifier will be interpreted as a literal:
+
+* `^+`
+* `(*...)`
+
+Don't mix up order within curly braces quantifier: `{10, 3}`
+
+Must close braces, braces need numeric values:
+
+* `{10, [a..]`
+* `{xyz}`
+
+**Repetition Limits**: Limit to number of times a repetition will match could be based on max integer size. Could also depend on engine compilation. Usually limit is ~2B. Golang limits to 1000.
+
+## Meta Characters - Alternation
+
+Alternate branches are implemented with pipe character `|`.
+
+Can have multiple branches. Any of the usual regex syntax can be used within each branch:
+
+```
+Branch 1|something else|numbers FTW: [0-9]+|[abc]{2,4}
+```
+
+When pipe char used in character class, no special meaning, matched as literal:
+
+![pipe literal](doc-images/pipe-literal.png "pipe literal")
+
+**PCRE vs POSIX**
+
+PCRE based engine stops at left-most (i.e. first) match.
+
+POSIX based engine tries to find left-most *longest* match. It tries to make the first match as long as possible, even if a shorter part of the string is already matching.
+
+Affects alternation:
+
+* PCRE engine stops at first/left-most branch that matches, and ignores other branches
+* POSIX engine tries *all possible* branches to find longest branch that matches. If it finds multiple equal length matches, returns left-most
+
+Eg regex with alternation:
+
+```
+cat|catalogue
+```
+
+Subject string:
+
+```
+I received the new catalogue in the mail today.
+```
+
+With PCRE - one match: `cat`.
+
+With POSIX - one match: `catalogue`.
+
+In PCRE implementation, might as well just use regex `cat` because its part of `catalogue` therefore second branch would never be reached.
+
+This is why in earlier example matching CSS hex color, the 6 char length variation was written before 3 char length variation. Otherwise PCRE engine would stop matching when it found 3 characters:
+
+```
+/#?([A-F0-9]{6}|[A-F0-9]{3})/i
+```
+
+**Alternation Summary**
+
+* Separates branches
+* Not special in character class
+* Branching order matters! Make sure the left-most branch is the one you want the most, and that it doesn't block matches to potential other matches
+* Lowest precedence
+
+Left at 4:40
