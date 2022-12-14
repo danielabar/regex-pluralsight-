@@ -21,6 +21,7 @@
     - [Meta Characters - Wildcard](#meta-characters---wildcard)
     - [Meta Characters - Quantifiers and Greediness](#meta-characters---quantifiers-and-greediness)
   - [Meta Characters - Alternation](#meta-characters---alternation)
+    - [Meta Characters - Sub-patterns and Grouping](#meta-characters---sub-patterns-and-grouping)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -46,7 +47,7 @@ Module 3:
 Clip 4: http://myregexp.com/
 Clip 6: https://regex101.com/
 Clip 7: http://www.rexv.org/
-Clip 8: http://regexhero.net/
+Clip 8: http://regexhero.net/ (Windows only?)
 Clip 9: http://rubular.com/
 
 Module 4:
@@ -816,6 +817,99 @@ This is why in earlier example matching CSS hex color, the 6 char length variati
 * Separates branches
 * Not special in character class
 * Branching order matters! Make sure the left-most branch is the one you want the most, and that it doesn't block matches to potential other matches
-* Lowest precedence
+* Lowest precedence.
 
-Left at 4:40
+Alternation operator has lowest operator precedence of all regex operators. Best practice is to wrap it in brackets to indicate start/end of alternation.
+
+Bad:
+
+```
+/My favourte|favorite color|color/
+```
+
+Good:
+
+```
+/My(favourite|favorite) (colour|color)/
+```
+
+### Meta Characters - Sub-patterns and Grouping
+
+Grouping operator `(...)` to group things together has multiple functions:
+
+* Create a sub-expression for either:
+  * Delimiting alternation
+  * Repetition
+
+Regex treats a group as a unit.
+
+Example regex to match IPv4 Address:
+
+0.0.0.0 - 255.255.255.255
+
+Four groups of numbers separated by a literal period, and numbers are always between 0 and 255.
+
+First five of these are valid IPs, last two invalid:
+
+```
+255.48.8.29
+127.0.0.0
+0.0.0.0
+50.96.38.64
+158.06.125.83
+
+272.5.260.85
+5862.654.384.0
+```
+
+Start with matching first set of numbers:
+
+First branch matches 250 - 255, Second branch matches 200 - 249, Third branch matches 0 - 199. These three branches are grouped together to delimit alternation:
+
+```
+^(25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})
+```
+
+NOTE: I get different result from instructor, this part `[0-9]{1,2}` matches `58` in the last invalid IP:
+
+![ipv4 part1](doc-images/ipv4-part1.png "ipv4 part1")
+
+Next step is to match a literal dot (use backslash to escape), then the entire pattern created so far should match exactly 3 times.
+
+Wrap the whole thing in another set of parents so that the repetition quantifier `{3}` will apply to the entire expression so far. i.e. now using grouping so that the repetition quantifier can apply to the intended portion of the pattern:
+
+```
+^((25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})\.){3}
+```
+
+Now only the valid IPs are matched up until their last part:
+
+![ipv4 part2](doc-images/ipv4-part2.png "ipv4 part2")
+
+Last part is to repeat the numeric pattern but without a trailing dot. Put all of that in parens
+
+```
+^((25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})$
+```
+
+![ipv4 part3](doc-images/ipv4-part3.png "ipv4 part3")
+
+Other major purpose of grouping operator:
+
+* Remember sub-pattern matches
+
+Match info is returned as an array such that the first entry in array contains the entire match:
+
+`[0]` - Complete match
+
+Remainder of array entries contain sub-matches:
+
+`[1]` - Match against sub-pattern 1
+
+`[2]` - Match against sub-pattern 2
+
+`[3]` - Match against sub-pattern 3, etc.
+
+Order of sub-matches in array determined by order of opening parens `(` in regex:
+
+Left at 2:18
