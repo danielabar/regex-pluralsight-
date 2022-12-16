@@ -22,6 +22,8 @@
     - [Meta Characters - Quantifiers and Greediness](#meta-characters---quantifiers-and-greediness)
   - [Meta Characters - Alternation](#meta-characters---alternation)
     - [Meta Characters - Sub-patterns and Grouping](#meta-characters---sub-patterns-and-grouping)
+    - [Meta Characters - Anchors and Boundaries](#meta-characters---anchors-and-boundaries)
+    - [Meta Characters - Escaping & the Backslash](#meta-characters---escaping--the-backslash)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -840,6 +842,8 @@ Grouping operator `(...)` to group things together has multiple functions:
 * Create a sub-expression for either:
   * Delimiting alternation
   * Repetition
+* Remember sub-pattern matches
+* Apply advanced features: `(?...)`
 
 Regex treats a group as a unit.
 
@@ -876,7 +880,7 @@ NOTE: I get different result from instructor, this part `[0-9]{1,2}` matches `58
 
 Next step is to match a literal dot (use backslash to escape), then the entire pattern created so far should match exactly 3 times.
 
-Wrap the whole thing in another set of parents so that the repetition quantifier `{3}` will apply to the entire expression so far. i.e. now using grouping so that the repetition quantifier can apply to the intended portion of the pattern:
+Wrap the whole thing in another set of parens so that the repetition quantifier `{3}` will apply to the entire expression so far. i.e. now using grouping so that the repetition quantifier can apply to the intended portion of the pattern:
 
 ```
 ^((25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})\.){3}
@@ -910,6 +914,126 @@ Remainder of array entries contain sub-matches:
 
 `[3]` - Match against sub-pattern 3, etc.
 
-Order of sub-matches in array determined by order of opening parens `(` in regex:
+Order of sub-matches in array determined by order of opening parens `(` in regex. Eg regex below has 3 opening parens:
 
-Left at 2:18
+```
+/(abc)+((d[e]*f)?123){2}/
+```
+
+![submatch order](doc-images/submatch-order.png "submatch order")
+
+When submatch is for repeating group (i.e. has a quantifier), only last successful match is remembered.
+
+If group has `?` or `*` quantifier, last successful match could include an empty string.
+
+Looking at submatches of IP regex we wrote earlier:
+
+![ip submatch](doc-images/ip-submatch.png "ip submatch")
+
+If want to remember *all* submatches from all repetitions - cannot do with quantifiers. Need to edit regex to remove quantifiers and manually repeat the pattern(s).
+
+```
+^(25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})\.(25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})\.(25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})\.(25[0-5]|2[0-4][0-9]|[01]?[0-9]{1,2})$
+```
+
+![ip match no repeat](doc-images/ip-match-no-repeat.png "ip match no repeat")
+
+**Advanced Features**
+
+Apply advanced features: `(?...)`
+
+* Look around without moving match pointer
+* Created named sub-matches
+* Conditional sub-patterns
+* Recursion
+* Inline comments
+
+But not available in all environments, not in scope of this course.
+
+### Meta Characters - Anchors and Boundaries
+
+Boundaries are:
+
+* Beginning of string
+* Beginning of line
+* End of string
+* End of line
+* Beginning/end of word
+
+![boundaries](doc-images/boundaries.png "boundaries")
+
+Boundary assertions do not match any characters, i.e. they result in zero-width matches.
+
+Capturing just a boundary in a regex is not useful, nor is combining it with a quantifier because the boundary point does not "move forward".
+
+Example multiline string:
+
+```
+Dropping your anchor.
+Making a place home.
+```
+
+`^` and `$` are bound to entire input string, whether its a single or multi-line.
+
+Unless `m` (multiline) modifier is used. Then `^` matches beginning of *each line*, and `$` matches end of *each line*.
+
+**WATCH OUT**
+
+`$` can match end of string including new line char `\n` or just before the new line. Varies by implementation.
+
+Use `\z` to anchor pattern at end of string *and* ensure there's no newline char included. BUT this syntax not supported everywhere.
+
+**Anchors**
+
+* `^` and `$` are bound to entire input string or each line if `m` multiline mode is being used.
+* `$` *might* match `\n` (security concern, eg: email?)
+* Anchors can be combined or used independently
+* Not always at beginning and end of regex, can be part of alternate branch(es)
+
+**Word Boundaries**
+
+Denoted with `\b`.
+
+Point in string between word character and non-word character:
+
+![word boundary](doc-images/word-boundary.png "word boundary")
+
+Non word characters include: space, colon `:`, period, punctuation mark.
+
+**Non Word Boundaries**
+
+Denoted with `\B`.
+
+Opposite of word boundary - points in string between two adjacent characters of the same type. Could be two words or two non-words.
+
+![non word boundary](doc-images/non-word-boundary.png "non word boundary")
+
+This example will use: https://rubular.com/
+
+Test string:
+
+```
+Hey Jude, don't make it bad
+Take a sad song and make it better
+Remember to let her into your heart
+Then you can start to make it better
+
+Hey Jude, don't be afraid
+You were made to go out and get her
+The minute you let her under your skin
+Then you begin to make it better
+```
+
+Suppose we want to find matches of the word `be`.
+
+First naive approach is to try a regex of just literals: `be`:
+
+![be literal](doc-images/be-literal.png "be literal")
+
+Issue is majority of the matches are where `be` happens to appear as part of a word, but we only want the actual word `be`.
+
+Update regex to include word boundaries: `\bbe\b`, now it matches only the entire word `be`:
+
+![be word boundary](doc-images/be-word-boundary.png "be word boundary")
+
+### Meta Characters - Escaping & the Backslash
