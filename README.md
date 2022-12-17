@@ -39,11 +39,14 @@ Tester one at a time: https://www.regextester.com/
 
 Tester multiple: https://regexr.com/
 
+List of Metacharacters: https://yanohirota.com/en/regex-metachar/
+
 Also: Proprietary html/js tool provided by instructor in Exercise files.
 
 Module 2:
 Testing: proprietary, included in the exercise files.
-Visualisation: https://regexper.com/
+
+Visualization: https://regexper.com/
 
 Module 3:
 Clip 4: http://myregexp.com/
@@ -1037,3 +1040,133 @@ Update regex to include word boundaries: `\bbe\b`, now it matches only the entir
 ![be word boundary](doc-images/be-word-boundary.png "be word boundary")
 
 ### Meta Characters - Escaping & the Backslash
+
+Backslash `\` used for escaping. Different kinds of escaping:
+
+1. Remove special meaning from meta-characters
+2. Give special meaning to ordinary characters
+
+**Remove special meaning from meta-characters**
+
+These have special meaning:
+
+```
+[ ] ( ) | . ? * + { } ^ $ \   / (delimiter)
+```
+
+To use any of the above as literal, need to backslash escape, i.e. to use the actual character as a literal:
+
+```
+\[ \] \( \) \| \. \? \* \+ \{ \} \^ \$ \\   \/ (delimiter)
+```
+
+Escaping especially important for `.`.
+
+For other meta characters (eg: `| ? * +`), if forget to escape, will break regex, or get syntax/compile error.
+
+But if forget to escape dot `.`, will still get a match, but probably not what you wanted. Because unescaped `.` is the wildcard (matches any character except newline).
+
+Wildcard dot also matches literal dot so you may not notice right away that something is wrong (need to write negative unit tests - i.e. given some strings that should *not* match to notice the issue).
+
+Example where it matters - phishing websites, domain squatters register a domain that looks like the real legit one, but only one character different:
+
+```
+$string = 'Come see my new photos at
+            http://wwwfacebook.com/myfakepage';
+```
+
+Trying to filter out malicious url's but forget to escape dot:
+
+```
+$regex = 'http[s]?://(w{3}.)?facebook.com/';
+```
+
+This will result in a match, i.e. thinking its a good url, solution is to remember to escape where you want a literal dot
+
+```
+$regex = 'http[s]?://(w{3}\.)?facebook\.com/';
+```
+
+NOTE: For me even the regex that forgets to escape dot did NOT match???
+
+**Legibility**
+
+Escaping makes regex even harder to read. There's another way:
+
+Most metacharacters lose special meaning when used inside a character class - use square bracket syntax to wrap whatever you want as a literal rather than backslash:
+
+```
+[(] [)] [|] [.] [?] [*] [+] [{] [}] [$]    [/]
+```
+
+**Programming Languages vs. Regular Expressions**
+
+To avoid confusion - square bracket wrapping is useful over backslash.
+
+Recall control characters: Many programming languages use backslash to represent these in strings such as newline `\n` and tab `\t`:
+
+![control chars](doc-images/control-chars.png "control chars")
+
+Programming languages also use backslash to escape string delimiters used within a string.
+
+Then regex *also* use backslash character - creates confusion: Is the backslash char being used for the programming language or for the regex?
+
+**Escape and Escape Again**
+
+Sometimes to make it clear whether backslash is for the programming language or regex, need double escape.
+
+First - escape so the character can be used in regex:
+
+```
+$regex = "[\r\n\t]+";
+
+$regex = \([0-9]+\+[0-9]+\)\*[0-9]+;
+
+$regex = /http:\/\//;
+
+$regex = ' attr=["'][^'"]+["']';
+```
+
+Second - backslash escape the backslash for programming language:
+
+```
+$regex = "[\\r\\n\\t]+";
+
+$regex = \\([0-9]+\\+[0-9]+\\)\\*[0-9]+;
+
+$regex = /http:\\/\\//;
+
+$regex = ' attr=["\'][^\'"]+["\']';
+```
+
+Requiring extra backslash depends on how regex is used in the code *and* rules can vary by programming language:
+
+1. String
+   1. Delimited by single quotes
+   2. Delimited by double quotes
+2. Non quoted literal
+3. Special variable type
+
+If can use square brackets, avoids the single vs double backslash dance:
+
+```
+$regex = [()][0-9]+[+][0-9]+[)][*][0-9]+;
+```
+
+**Matching a Literal Backslash**
+
+Since backslash character `\` has special meaning in regex, if want to use it as a literal, first need to escape it with another backslash:
+
+```
+\\
+```
+
+Then depending on programming language, may need to escape each of these backslashes with another backslash, resulting in 4 of them!
+
+```
+\\\\
+```
+
+**Arbitrary Input**
+
+Left at 5:35
