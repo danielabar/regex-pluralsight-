@@ -23,7 +23,10 @@
   - [Meta Characters - Alternation](#meta-characters---alternation)
     - [Meta Characters - Sub-patterns and Grouping](#meta-characters---sub-patterns-and-grouping)
     - [Meta Characters - Anchors and Boundaries](#meta-characters---anchors-and-boundaries)
-    - [Meta Characters - Escaping & the Backslash](#meta-characters---escaping--the-backslash)
+    - [Meta Characters - Escaping \& the Backslash](#meta-characters---escaping--the-backslash)
+      - [Remove special meaning from meta-characters](#remove-special-meaning-from-meta-characters)
+      - [Give special meaning to ordinary characters](#give-special-meaning-to-ordinary-characters)
+    - [Summary](#summary)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1046,7 +1049,7 @@ Backslash `\` used for escaping. Different kinds of escaping:
 1. Remove special meaning from meta-characters
 2. Give special meaning to ordinary characters
 
-**Remove special meaning from meta-characters**
+#### Remove special meaning from meta-characters
 
 These have special meaning:
 
@@ -1169,4 +1172,74 @@ Then depending on programming language, may need to escape each of these backsla
 
 **Arbitrary Input**
 
-Left at 5:35
+How to use user input (eg: user wants to search for some string as part of a document or in a collection of documents) as part of a regex?
+
+User input also needs to be escaped for meta characters.
+
+After validating user input to avoid attacks, can use string concatenation with word boundary `\b` to make the user input a regex. But may have a problem if user input contains meta characters such as `.`:
+
+```php
+$validated = 'e.email+addy@test.com';
+
+// Raw input string, no double escaping needed.
+$regex = '\b' + $validated + '\b';
+
+// PROBLEM: Literal dots in user input will be treated as metacharcters in resulting regex:
+$regex = '\be.email+addy@test.com\b';
+```
+
+Some programming environments support escape sequence `\Q`...`\E`. Anything between these treated as literal and not interpreted by regex compiler:
+
+```php
+$regex = '\b\Qe.email+addy@test.com\E\b';
+```
+
+Also, some programming environments may have a function to escape strings for regex:
+
+```php
+$regex = '\b' + re.quote( $validated ) + '\b';
+$regex = '\be\.mail\+addy@test\.com\b';
+```
+
+Some languages and their escape functions:
+
+![lang escape](doc-images/lang-escape.png "lang escape")
+
+JavaScript does not have escape sequences or a function, use this function which uses a regex to replace regex metacharacters with their escaped versions. Then resulting string can be used as part of a new pattern:
+
+```javascript
+function escapeInputString( str ) {
+  return str.replace(/[[\]\?\\{}()|?+^$*.-/g, "\\$&")
+}
+```
+
+**What to Escape**
+
+Meta-characters
+* for regex
+* for programming language
+
+Regex delimeter
+* for regex
+* for programming language
+
+String delimeter
+* for programming language
+
+#### Give special meaning to ordinary characters
+
+Shortcodes: Recall use of `\s` in css hex color example:
+
+```
+/^\s*#?([A-F0-9]{6}|[A-F0-9]{3})\s*$/i
+```
+
+`\s` is a shorthand for whitespace. i.e. a shorthand for a predefined character class.
+
+### Summary
+
+* Regex processes input string from left to right
+* A match is always preferred over a non-match
+* PCRE returns first match, POSIX returns left-most longest match
+* Precedence is: `()` > `?*+{}` > `ab` > `|`
+* Avoid backtracing
