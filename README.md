@@ -23,10 +23,12 @@
   - [Meta Characters - Alternation](#meta-characters---alternation)
     - [Meta Characters - Sub-patterns and Grouping](#meta-characters---sub-patterns-and-grouping)
     - [Meta Characters - Anchors and Boundaries](#meta-characters---anchors-and-boundaries)
-    - [Meta Characters - Escaping \& the Backslash](#meta-characters---escaping--the-backslash)
+    - [Meta Characters - Escaping & the Backslash](#meta-characters---escaping--the-backslash)
       - [Remove special meaning from meta-characters](#remove-special-meaning-from-meta-characters)
       - [Give special meaning to ordinary characters](#give-special-meaning-to-ordinary-characters)
     - [Summary](#summary)
+  - [Shortcodes, Modifiers, and Delimiters](#shortcodes-modifiers-and-delimiters)
+    - [Shortcodes](#shortcodes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1243,3 +1245,101 @@ Shortcodes: Recall use of `\s` in css hex color example:
 * PCRE returns first match, POSIX returns left-most longest match
 * Precedence is: `()` > `?*+{}` > `ab` > `|`
 * Avoid backtracing
+  * Avoid using dot `.` wildcard
+  * Be specific
+  * Use negated character classes if possible
+  * Apply non-greedy quantifiers if suitable to the problem
+
+## Shortcodes, Modifiers, and Delimiters
+
+### Shortcodes
+
+Pre-defined character classes. Most common:
+
+* Digits: `[0-9]` -> `\d`
+* Word characters: `[A-Za-z0-9_]` -> `\w`
+* Whitespace: `[\t\f\r\n]` -> `\s`
+
+**Negated Shortcodes**
+
+Use capital version of letter. Example, to match anything other than a digit `[^0-9]`, use `\D`:
+
+* `[^0-9]` -> `\D`
+* `[^A-Za-z0-9_]` -> `\W`
+* `[^\t\f\r\n]` -> `\S`
+
+**Example**
+
+Test strings (fourth one is three empty spaces)
+
+```
+Alpha_with_Underscores
+Alphanum123456
+0123456789
+
+A sentence with numb3rs and spac3s
+```
+
+Start with character class for word characters, anchoring to start of string, then `+` quantifier to match one or more times to end of string:
+
+```
+^[A-Za-z0-9_]+$
+```
+
+Matches first three test strings:
+
+![word char class](doc-images/word-char-class.png "word char class")
+
+Replace char class with word shortcode `\w`:
+
+```
+^\w+$
+```
+
+Get same result:
+
+![word shortcode](doc-images/word-shortcode.png "word shortcode")
+
+Digit shortcode matches only the string with all numbers:
+
+![digit shortcode](doc-images/digit-shortcode.png "digit shortcode")
+
+Whitespace shortcode matches line with only spaces:
+
+![whitespace shortcode](doc-images/whitespace-shortcode.png "whitespace shortcode")
+
+Shortcodes can be combined in a character class:
+
+![shortcode in char class](doc-images/shortcode-in-charclass.png "shortcode in char class")
+
+Negated shortcode:
+
+![negated shortcode](doc-images/negated-shortcode.png "negated shortcode")
+
+Combining negated shortcodes in character class - eg: match everything that is not whitespace *OR* not a digit, will match everything:
+
+![negated shortcode charclass](doc-images/negated-shortcode-charclass.png "negated shortcode charclass")
+
+Solution, is to use negated char class with positive shortcode - eg: match string that does not contain whitespace *and* not digits:
+
+![negated shortcode pos charclass](doc-images/negated-charclass-pos-shortcode.png "negated shortcode pos charclass")
+
+**PCRE 7.2+ Shortcodes**
+
+A few more were introduced as of PCRE 7.2 (Jun. 2007):
+
+* Horizontal space: `[\t\f]` -> `\h`
+* Vertical space: `[\r\n]` -> `\v`
+
+Negated versions are also supported:
+
+* Anything but a horizontal space: `[^\t\f]` -> `\H`
+* Anything but a vertical space: `[^\r\n]` -> `\V`
+
+NOTE: `\V` is control sequence for vertical tab, so if you want to match that, need to use hex or octal sequence. (rarely used)
+
+**WATCH OUT**
+
+Shortcodes discussed so far are PCRE only. If using POSIX dialect, it's different
+
+Left at 4:35
