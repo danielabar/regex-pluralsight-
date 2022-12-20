@@ -29,6 +29,7 @@
     - [Summary](#summary)
   - [Shortcodes, Modifiers, and Delimiters](#shortcodes-modifiers-and-delimiters)
     - [Shortcodes](#shortcodes)
+    - [Unicode Shortcodes](#unicode-shortcodes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1342,4 +1343,79 @@ NOTE: `\V` is control sequence for vertical tab, so if you want to match that, n
 
 Shortcodes discussed so far are PCRE only. If using POSIX dialect, it's different
 
-Left at 4:35
+* `\s` -> `[:space:]`
+* `\s+` -> `[[:space:]]+`
+* `[\s\d]+` -> `[[:space:][:digit]]+`
+
+PCRE style shortcodes can be used anywhere within regex but POSIX shortcodes can only be used in a character class. If you put POSIX shortcode outside of character class, will get interpreted as literal.
+
+![pcre posix shortcodes](doc-images/pcre-posix-shortcodes.png "pcre posix shortcodes")
+
+Posix also has some shortcodes that are not in PCRE:
+
+![posix shortcode extra](doc-images/posix-shortcode-extra.png "posix shortcode extra")
+
+Some PCRE engines will also support POSIX shortcodes.
+
+Shortcode implementations may be locale dependent:
+
+Example, if locale is set to English `en`, letters with accents will not be recognized as word characters:
+
+`[\w]+` will not match `déjà vu`.
+
+But if locale set to French `fr`, then:
+
+`[\w]+` will match `déjà vu`.
+
+Also, `\b`, which uses `\w` and `\W` to find word boundaries is also locale dependent because checks if two adjacent characters are of the same type.
+
+Complication: Sometimes setting locale in programming environment is not thread safe.
+
+Complication: Different engines implement shortcodes differently. Eg:
+
+Space shortcode `\s` usually is defined as horizontal tab, new line, carriage return, form feed, and space character:
+
+```
+[ \f\n\r\t]
+```
+
+But in some implementations, it could also contain vertical tab `\v` and/or other space characters from unicode character table.
+
+**Advantages**
+
+* Adjust to locale
+
+**Disadvantages**
+
+* Adjust to locale
+* Inconsistent implementations
+* Low portability
+* Difficult to unit test (need different environments and locales)
+
+### Unicode Shortcodes
+
+Is unicode even supported in your environment? Need to check the following:
+
+* Regex engine support
+* Compiled with unicode flag enabled
+* Input string encoded in unicode
+
+If answer is yes, can use unicode shortcodes and they don't have the same pitfalls as PCRE/POSIX shortcodes listed in earlier section.
+
+**Graphmeme Clusters**
+
+Unicode character can be single code point or combination of code points, eg:
+
+`à` could be `U+00E0` OR `U+0061 + U+0300`
+
+If it's a combination, the combined glyph is called `graphmeme`.
+
+Remember the dot `.` wildcard we learned earlier? It only matches code points.
+
+Eg: If input string contains the accented a `à` encoded as a single code point `U+00E0`, then the dot wildcard `.` will match it. But if the accented a is encoded as a graphmeme `U+0061 + U+0300`, then the dot wildcard `.` will only match the first part which is just the letter `a`, but without the accent!
+
+**Unicode Wildcard**
+
+`\X` shortcode matches complete graphmemes...
+
+Left at 1:22
